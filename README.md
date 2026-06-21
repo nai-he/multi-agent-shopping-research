@@ -11,13 +11,13 @@
 
 ## 截图预览
 
-| Dashboard | 音乐搜索 |
-|:---:|:---:|
-| ![Dashboard](docs/screenshots/01_dashboard.png) | ![Music](docs/screenshots/02_music_search.png) |
+| Dashboard | 音乐搜索 | 历史记录 |
+|:---:|:---:|:---:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Music](docs/screenshots/music_search.png) | ![History](docs/screenshots/history.png) |
 
-| 历史记录 |
-|:---:|
-| ![History](docs/screenshots/03_history.png) |
+| 系统架构 | 分析报告 | 后台管理 |
+|:---:|:---:|:---:|
+| ![Architecture](docs/screenshots/architecture.png) | ![Report](docs/screenshots/report.png) | ![Admin](docs/screenshots/admin.png) |
 
 ---
 
