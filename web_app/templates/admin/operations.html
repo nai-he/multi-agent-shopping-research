@@ -1,0 +1,55 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}操作记录 - Multi-Agent 购物调研系统{% endblock %}
+{% block page_title %}操作记录{% endblock %}
+{% block page_subtitle %}按时间查看所有查询与运行状态{% endblock %}
+
+{% block content %}
+<div class="admin-panel">
+    <div class="admin-panel-header">
+        <h5 class="mb-0">全部操作</h5>
+        <span class="text-muted small">第 {{ pagination.page }} / {{ pagination.pages or 1 }} 页</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>用户</th>
+                    <th>查询</th>
+                    <th>地区</th>
+                    <th>进度</th>
+                    <th>状态</th>
+                    <th>时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in operations %}
+                <tr>
+                    <td>{{ item.user.username }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ item.query }}</div>
+                        <div class="text-muted small">{{ item.platforms|join(', ') }}</div>
+                    </td>
+                    <td>{{ item.location }}</td>
+                    <td>{{ item.products_count }} / {{ item.estimated_total or item.sample_count }}</td>
+                    <td><span class="badge badge-{{ item.status }}">{{ item.status }}</span></td>
+                    <td>{{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if pagination.pages > 1 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% for page_num in range(1, pagination.pages + 1) %}
+            <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.operations', page=page_num) }}">{{ page_num }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

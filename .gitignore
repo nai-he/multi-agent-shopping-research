@@ -1,0 +1,80 @@
+# 环境变量
+.env
+.env.local
+
+# API 密钥配置
+config/agent_config.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 日志
+*.log
+logs/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 上传和报告
+web_app/uploads/
+web_app/reports/
+web_app/sqlite/
+
+# 音乐下载
+web_app/music/
+
+# 数据文件
+data/
+reports/
+*.xlsx
+*.csv
+
+# Playwright
+.pytest_cache/
+playwright/.auth/
+
+# 第三方大文件
+BinaryifyNeteaseCloudMusicApi/
+ffmpeg.zip
+web_app/ffmpeg.exe
+=1.0.0

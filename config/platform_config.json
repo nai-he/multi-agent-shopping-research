@@ -1,0 +1,58 @@
+{
+  "platforms": {
+    "xianyu": {
+      "enabled": true,
+      "name": "闲鱼",
+      "base_url": "https://2.taobao.com",
+      "requires_login": false,
+      "rate_limit": {
+        "requests_per_minute": 30,
+        "delay_range": [2, 5]
+      }
+    },
+    "taobao": {
+      "enabled": true,
+      "name": "淘宝",
+      "base_url": "https://s.taobao.com",
+      "requires_login": false,
+      "rate_limit": {
+        "requests_per_minute": 30,
+        "delay_range": [2, 5]
+      }
+    },
+    "jd": {
+      "enabled": true,
+      "name": "京东",
+      "base_url": "https://search.jd.com",
+      "requires_login": false,
+      "rate_limit": {
+        "requests_per_minute": 30,
+        "delay_range": [2, 5]
+      }
+    },
+    "pdd": {
+      "enabled": true,
+      "name": "拼多多",
+      "base_url": "https://mobile.yangkeduo.com",
+      "requires_login": false,
+      "rate_limit": {
+        "requests_per_minute": 30,
+        "delay_range": [2, 5]
+      }
+    }
+  },
+  "scraper_settings": {
+    "mode": "real",
+    "headless": true,
+    "max_products_per_platform": 50,
+    "timeout": 30,
+    "wait_after_load_ms": 1800,
+    "max_retries": 3,
+    "use_proxy": false,
+    "user_agents": [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+    ]
+  }
+}

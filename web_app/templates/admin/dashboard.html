@@ -1,0 +1,120 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}管理员总览 - Multi-Agent 购物调研系统{% endblock %}
+{% block page_title %}总览{% endblock %}
+{% block page_subtitle %}查看用户、查询和失败情况{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="admin-metric">
+            <span>用户总数</span>
+            <strong>{{ stats.users_total }}</strong>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-metric">
+            <span>查询总数</span>
+            <strong>{{ stats.queries_total }}</strong>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-metric">
+            <span>已完成</span>
+            <strong>{{ stats.completed_total }}</strong>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="admin-metric">
+            <span>失败 / 处理中</span>
+            <strong>{{ stats.failed_total }} / {{ stats.processing_total }}</strong>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h5 class="mb-0">最近用户</h5>
+                <a href="{{ url_for('admin.users') }}">查看全部</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table admin-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>用户</th>
+                            <th>查询</th>
+                            <th>状态</th>
+                            <th>最近活动</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">{{ user.username }}</div>
+                                <div class="text-muted small">{{ user.email }}</div>
+                            </td>
+                            <td>{{ user.total_queries }}</td>
+                            <td><span class="badge bg-light text-dark">{{ user.completed_queries }} 成功 / {{ user.failed_queries }} 失败</span></td>
+                            <td>{{ user.last_activity.strftime('%Y-%m-%d %H:%M') if user.last_activity else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="admin-panel mb-4">
+            <div class="admin-panel-header">
+                <h5 class="mb-0">最近失败</h5>
+                <a href="{{ url_for('admin.operations') }}">查看全部</a>
+            </div>
+            {% if recent_failures %}
+                <div class="list-group list-group-flush">
+                    {% for item in recent_failures %}
+                    <div class="list-group-item border-0 px-0">
+                        <div class="d-flex justify-content-between gap-3">
+                            <div>
+                                <div class="fw-semibold">{{ item.query }}</div>
+                                <div class="text-muted small">{{ item.location }} · {{ item.user.username }}</div>
+                            </div>
+                            <span class="badge badge-failed">失败</span>
+                        </div>
+                        <div class="small text-muted mt-2">{{ item.error_message or '无错误详情' }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-muted py-4">暂无失败记录</div>
+            {% endif %}
+        </div>
+
+        <div class="admin-panel">
+            <div class="admin-panel-header">
+                <h5 class="mb-0">最近操作</h5>
+                <a href="{{ url_for('admin.operations') }}">查看全部</a>
+            </div>
+            <div class="timeline-list compact">
+                {% for item in recent_operations[:5] %}
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div>
+                                <div class="fw-semibold">{{ item.query }}</div>
+                                <div class="text-muted small">{{ item.user.username }} · {{ item.location }}</div>
+                            </div>
+                            <span class="badge badge-{{ item.status }}">{{ item.status }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

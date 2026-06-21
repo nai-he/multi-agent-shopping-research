@@ -1,0 +1,47 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}用户管理 - Multi-Agent 购物调研系统{% endblock %}
+{% block page_title %}用户管理{% endblock %}
+{% block page_subtitle %}查看每个用户的查询轨迹和活跃情况{% endblock %}
+
+{% block content %}
+<div class="admin-panel">
+    <div class="admin-panel-header">
+        <h5 class="mb-0">用户列表</h5>
+        <span class="text-muted small">共 {{ users|length }} 人</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table admin-table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>用户</th>
+                    <th>邮箱</th>
+                    <th>查询</th>
+                    <th>成功 / 失败</th>
+                    <th>最近登录</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ user.username }}</div>
+                        <div class="text-muted small">ID: {{ user.id }}</div>
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.total_queries }}</td>
+                    <td>{{ user.completed_queries }} / {{ user.failed_queries }}</td>
+                    <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '暂无' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>详情
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

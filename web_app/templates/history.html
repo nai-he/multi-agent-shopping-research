@@ -1,0 +1,198 @@
+{% extends "layout.html" %}
+
+{% block title %}查询历史 - Multi-Agent 购物调研系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        查询历史
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="historyList">
+                        <div class="text-center py-5">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="text-muted mt-3">加载中...</p>
+                        </div>
+                    </div>
+
+                    <!-- 分页 -->
+                    <nav id="pagination" class="mt-4" style="display: none;">
+                        <ul class="pagination justify-content-center">
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let currentPage = 1;
+
+    // 加载历史记录
+    function loadHistory(page = 1) {
+        $.ajax({
+            url: `/api/history?page=${page}&per_page=10`,
+            method: 'GET',
+            success: function(data) {
+                renderHistory(data.items);
+                renderPagination(data.page, data.pages);
+                currentPage = page;
+            },
+            error: function() {
+                $('#historyList').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        加载失败
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // 渲染历史记录
+    function renderHistory(items) {
+        if (items.length === 0) {
+            $('#historyList').html(`
+                <div class="text-center py-5 text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>暂无历史记录</p>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '<div class="table-responsive"><table class="table table-hover">';
+        html += `
+            <thead>
+                <tr>
+                    <th>查询内容</th>
+                    <th>平台</th>
+                    <th>商品数</th>
+                    <th>状态</th>
+                    <th>耗时</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+
+        items.forEach(function(item) {
+            const statusBadge = getStatusBadge(item.status);
+            const platforms = item.platforms.map(p => getPlatformName(p)).join(', ');
+            const time = new Date(item.created_at).toLocaleString('zh-CN');
+            const elapsed = item.elapsed_time ? `${item.elapsed_time.toFixed(1)}s` : '-';
+            const queryText = escapeHtml(item.query);
+            const platformText = escapeHtml(platforms);
+            const locationText = escapeHtml(item.location || '不限');
+            const actionLabel = item.status === 'failed' ? '查看诊断' : '查看结果';
+            const actionClass = item.status === 'failed' ? 'btn-outline-danger' : 'btn-primary';
+            const canOpenDetail = item.status === 'completed' || item.status === 'failed';
+
+            html += `
+                <tr>
+                    <td><strong>${queryText}</strong></td>
+                    <td>
+                        <small>${platformText}</small><br>
+                        <small class="text-muted">${locationText} · ${item.sample_count || '-'} 条 · ${getSortOrderName(item.sort_order)}</small>
+                    </td>
+                    <td>${item.products_count || '-'} / ${item.estimated_total || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${elapsed}</td>
+                    <td><small>${time}</small></td>
+                    <td>
+                        ${canOpenDetail
+                            ? `<a href="/result/${item.id}" class="btn btn-sm ${actionClass}">
+                                <i class="fas fa-eye me-1"></i>${actionLabel}
+                               </a>`
+                            : '<span class="text-muted">-</span>'}
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        $('#historyList').html(html);
+    }
+
+    // 渲染分页
+    function renderPagination(current, total) {
+        if (total <= 1) {
+            $('#pagination').hide();
+            return;
+        }
+
+        let html = '';
+        for (let i = 1; i <= total; i++) {
+            html += `
+                <li class="page-item ${i === current ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+
+        $('#pagination ul').html(html);
+        $('#pagination').show();
+
+        // 分页点击事件
+        $('#pagination a').on('click', function(e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            loadHistory(page);
+        });
+    }
+
+    // 工具函数
+    function getStatusBadge(status) {
+        const badges = {
+            'pending': '<span class="badge badge-pending">等待中</span>',
+            'processing': '<span class="badge badge-processing">处理中</span>',
+            'completed': '<span class="badge badge-completed">已完成</span>',
+            'failed': '<span class="badge badge-failed">失败</span>'
+        };
+        return badges[status] || '<span class="badge bg-secondary">未知</span>';
+    }
+
+    function getPlatformName(platform) {
+        const names = {
+            'xianyu': '闲鱼',
+            'taobao': '淘宝',
+            'jd': '京东',
+            'pdd': '拼多多'
+        };
+        return names[platform] || platform;
+    }
+
+    function getSortOrderName(sortOrder) {
+        const names = {
+            'none': '不排序',
+            'price_asc': '价格升序',
+            'price_desc': '价格降序'
+        };
+        return names[sortOrder] || sortOrder || '不排序';
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // 初始加载
+    loadHistory();
+});
+</script>
+{% endblock %}

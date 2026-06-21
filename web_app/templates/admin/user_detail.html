@@ -1,0 +1,56 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}用户详情 - Multi-Agent 购物调研系统{% endblock %}
+{% block page_title %}用户详情{% endblock %}
+{% block page_subtitle %}{{ user.username }} 的完整操作与查询记录{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="admin-panel h-100">
+            <div class="admin-panel-header">
+                <h5 class="mb-0">基础信息</h5>
+            </div>
+            <div class="profile-meta">
+                <div class="profile-meta-item"><span>用户名</span><strong>{{ user.username }}</strong></div>
+                <div class="profile-meta-item"><span>邮箱</span><strong>{{ user.email }}</strong></div>
+                <div class="profile-meta-item"><span>总查询</span><strong>{{ user.total_queries }}</strong></div>
+                <div class="profile-meta-item"><span>成功 / 失败</span><strong>{{ user.completed_queries }} / {{ user.failed_queries }}</strong></div>
+                <div class="profile-meta-item"><span>注册时间</span><strong>{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '-' }}</strong></div>
+                <div class="profile-meta-item"><span>最近活动</span><strong>{{ user.last_activity.strftime('%Y-%m-%d %H:%M') if user.last_activity else '-' }}</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="admin-panel h-100">
+            <div class="admin-panel-header">
+                <h5 class="mb-0">最近查询</h5>
+                <span class="text-muted small">{{ operations|length }} 条</span>
+            </div>
+            <div class="timeline-list">
+                {% for item in operations %}
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="d-flex justify-content-between gap-3 flex-wrap">
+                            <div>
+                                <div class="fw-semibold">{{ item.query }}</div>
+                                <div class="text-muted small">{{ item.location }} · {{ item.sample_count }} 条 · {{ item.sort_order }}</div>
+                                {% if item.error_message %}
+                                    <div class="small text-danger mt-1">{{ item.error_message }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <span class="badge badge-{{ item.status }}">{{ item.status }}</span>
+                                <div class="small text-muted mt-1">{{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else '-' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

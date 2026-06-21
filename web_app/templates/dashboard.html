@@ -1,0 +1,374 @@
+{% extends "layout.html" %}
+
+{% block title %}仪表盘 - Multi-Agent 购物调研系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 统计卡片 -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--gradient-primary);">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="stat-value" id="totalQueries">0</div>
+                <div class="stat-label">总查询次数</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--gradient-success);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value" id="completedQueries">0</div>
+                <div class="stat-label">已完成</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);">
+                    <i class="fas fa-spinner"></i>
+                </div>
+                <div class="stat-value" id="processingQueries">0</div>
+                <div class="stat-label">处理中</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: var(--gradient-danger);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value" id="failedQueries">0</div>
+                <div class="stat-label">失败</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能快捷入口 -->
+    <div class="row g-3 mb-5">
+        <div class="col-md-6">
+            <a href="#" class="feature-card active">
+                <div class="feature-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <div class="feature-content">
+                    <h6>商品调研</h6>
+                    <p>多平台商品搜索与价格监控</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="{{ url_for('music') }}" class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);">
+                    <i class="fas fa-music"></i>
+                </div>
+                <div class="feature-content">
+                    <h6>音乐搜索</h6>
+                    <p>QQ音乐、网易云音乐搜索</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- 新建查询 -->
+    <div class="row mb-5">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>
+                        新建查询
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="queryForm">
+                        <!-- AI 智能搜索框 -->
+                        <div class="mb-4">
+                            <label for="queryInput" class="form-label">
+                                <i class="fas fa-robot me-1"></i> 描述你想买的商品
+                            </label>
+                            <div class="ai-search-area">
+                                <textarea class="form-control" id="queryInput" rows="3"
+                                       placeholder="用自然语言描述需求，AI 会自动解析...&#10;例如：想买个二手iPhone 15 Pro，256G，预算5000以内，国行在保最好，不要卡贴机"></textarea>
+                                <button type="button" class="btn btn-ai-analyze" id="analyzeIntentBtn">
+                                    <i class="fas fa-magic me-2"></i> AI 解析需求
+                                </button>
+                            </div>
+                            <!-- AI 解析结果展示区 -->
+                            <div id="intentResult" class="intent-result-area" style="display: none;"></div>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                用自然语言描述，AI 会识别：品类 / 品牌 / 预算 / 成色 / 规格 / 偏好，并生成精准搜索关键词
+                            </small>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label for="locationSelect" class="form-label">
+                                    <i class="fas fa-location-dot me-1"></i> 地区
+                                </label>
+                                <input type="hidden" id="locationSelect" value="">
+                                <button type="button"
+                                        class="region-picker-trigger"
+                                        id="openRegionPickerBtn"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#regionPickerModal">
+                                    <span>
+                                        <i class="fas fa-map-location-dot me-2"></i>
+                                        <span id="selectedLocationText">全国</span>
+                                    </span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                                <div class="form-text mt-2">优先按福建及其城市筛选，闲鱼会按真实结果过滤。</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="sampleCountInput" class="form-label">
+                                    <i class="fas fa-random me-1"></i> 抓取数量
+                                </label>
+                                <input type="number" class="form-control form-control-lg" id="sampleCountInput" min="1" max="500" value="50">
+                                <div class="form-text mt-2">从总池中随机抽样抓取指定数量的商品。</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="sortOrderSelect" class="form-label">
+                                    <i class="fas fa-sort me-1"></i> 价格排序
+                                </label>
+                                <select class="form-select form-select-lg" id="sortOrderSelect">
+                                    <option value="none" selected>不排序</option>
+                                    <option value="price_asc">价格升序</option>
+                                    <option value="price_desc">价格降序</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-store me-1"></i> 选择平台
+                            </label>
+                            <div class="platform-selector">
+                                <div class="platform-option">
+                                    <input type="checkbox" id="platform_xianyu" value="xianyu" checked>
+                                    <label for="platform_xianyu" class="platform-label">
+                                        <div class="platform-icon">🐟</div>
+                                        <div class="platform-name">闲鱼</div>
+                                    </label>
+                                </div>
+                                <div class="platform-option">
+                                    <input type="checkbox" id="platform_taobao" value="taobao" checked>
+                                    <label for="platform_taobao" class="platform-label">
+                                        <div class="platform-icon">🛒</div>
+                                        <div class="platform-name">淘宝</div>
+                                    </label>
+                                </div>
+                                <div class="platform-option">
+                                    <input type="checkbox" id="platform_jd" value="jd">
+                                    <label for="platform_jd" class="platform-label">
+                                        <div class="platform-icon">🐶</div>
+                                        <div class="platform-name">京东</div>
+                                    </label>
+                                </div>
+                                <div class="platform-option">
+                                    <input type="checkbox" id="platform_pdd" value="pdd">
+                                    <label for="platform_pdd" class="platform-label">
+                                        <div class="platform-icon">🍊</div>
+                                        <div class="platform-name">拼多多</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-rocket me-2"></i> 开始分析
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 最近查询 -->
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        最近查询
+                    </h5>
+                    <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-primary">
+                        查看全部 <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="recentQueries">
+                        <div class="text-center py-5">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="text-muted mt-3">加载中...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 全国省份选择 -->
+	<div class="modal fade" id="regionPickerModal" tabindex="-1" aria-labelledby="regionPickerLabel" aria-hidden="true">
+	    <div class="modal-dialog modal-dialog-centered modal-lg">
+	        <div class="modal-content region-picker-modal">
+	            <div class="modal-header">
+	                <div>
+	                    <h5 class="modal-title" id="regionPickerLabel">
+	                        <i class="fas fa-map me-2"></i>选择地区
+	                    </h5>
+	                    <p class="text-muted mb-0 small">选择后会用于商品搜索和随机抓取范围</p>
+	                </div>
+	                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+	            </div>
+	            <div class="modal-body">
+	                <div class="region-picker-grid">
+	                    <button type="button" class="region-option active" data-location="">
+	                        <span class="region-name">全国</span>
+	                        <span class="region-desc">不限地区</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="北京">
+	                        <span class="region-name">北京</span>
+	                        <span class="region-desc">直辖市</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="上海">
+	                        <span class="region-name">上海</span>
+	                        <span class="region-desc">直辖市</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="天津">
+	                        <span class="region-name">天津</span>
+	                        <span class="region-desc">直辖市</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="重庆">
+	                        <span class="region-name">重庆</span>
+	                        <span class="region-desc">直辖市</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="广东">
+	                        <span class="region-name">广东</span>
+	                        <span class="region-desc">华南</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="浙江">
+	                        <span class="region-name">浙江</span>
+	                        <span class="region-desc">华东</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="江苏">
+	                        <span class="region-name">江苏</span>
+	                        <span class="region-desc">华东</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="山东">
+	                        <span class="region-name">山东</span>
+	                        <span class="region-desc">华东</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="福建">
+	                        <span class="region-name">福建</span>
+	                        <span class="region-desc">华东</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="四川">
+	                        <span class="region-name">四川</span>
+	                        <span class="region-desc">西南</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="湖北">
+	                        <span class="region-name">湖北</span>
+	                        <span class="region-desc">华中</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="湖南">
+	                        <span class="region-name">湖南</span>
+	                        <span class="region-desc">华中</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="河南">
+	                        <span class="region-name">河南</span>
+	                        <span class="region-desc">华中</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="河北">
+	                        <span class="region-name">河北</span>
+	                        <span class="region-desc">华北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="陕西">
+	                        <span class="region-name">陕西</span>
+	                        <span class="region-desc">西北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="辽宁">
+	                        <span class="region-name">辽宁</span>
+	                        <span class="region-desc">东北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="安徽">
+	                        <span class="region-name">安徽</span>
+	                        <span class="region-desc">华东</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="江西">
+	                        <span class="region-name">江西</span>
+	                        <span class="region-desc">华东</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="广西">
+	                        <span class="region-name">广西</span>
+	                        <span class="region-desc">华南</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="云南">
+	                        <span class="region-name">云南</span>
+	                        <span class="region-desc">西南</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="贵州">
+	                        <span class="region-name">贵州</span>
+	                        <span class="region-desc">西南</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="山西">
+	                        <span class="region-name">山西</span>
+	                        <span class="region-desc">华北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="黑龙江">
+	                        <span class="region-name">黑龙江</span>
+	                        <span class="region-desc">东北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="吉林">
+	                        <span class="region-name">吉林</span>
+	                        <span class="region-desc">东北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="内蒙古">
+	                        <span class="region-name">内蒙古</span>
+	                        <span class="region-desc">华北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="甘肃">
+	                        <span class="region-name">甘肃</span>
+	                        <span class="region-desc">西北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="新疆">
+	                        <span class="region-name">新疆</span>
+	                        <span class="region-desc">西北</span>
+	                    </button>
+	                    <button type="button" class="region-option" data-location="海南">
+	                        <span class="region-name">海南</span>
+	                        <span class="region-desc">华南</span>
+	                    </button>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	</div>
+
+<!-- 查询进度模态框 -->
+<div class="modal fade" id="progressModal" data-bs-backdrop="static" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog fa-spin me-2"></i>
+                    正在分析
+                </h5>
+            </div>
+            <div class="modal-body text-center py-5">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <h5 id="progressStatus">正在采集商品数据...</h5>
+                <p class="text-muted" id="progressDetail">请稍候，这可能需要 10-30 秒</p>
+                <div class="small text-muted" id="progressMeta"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

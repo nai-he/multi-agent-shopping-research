@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+
+{% block title %}音乐搜索 - Multi-Agent 购物调研系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h2 class="mb-2">
+                        <i class="fas fa-music me-2"></i>
+                        音乐搜索
+                    </h2>
+                    <p class="text-muted mb-0">在 QQ 音乐和网易云音乐中搜索歌曲、歌手、专辑</p>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>返回首页
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索表单 -->
+    <div class="row mb-5">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-search me-2"></i>
+                        搜索音乐
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="musicSearchForm">
+                        <!-- 搜索关键词 -->
+                        <div class="mb-4">
+                            <label for="musicQuery" class="form-label">
+                                <i class="fas fa-microphone me-1"></i> 搜索内容
+                            </label>
+                            <input type="text" class="form-control form-control-lg" id="musicQuery"
+                                   placeholder="输入歌曲名、歌手名或专辑名..." required>
+                            <small class="text-muted mt-2 d-block">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                例如：周杰伦、稻香、七里香专辑
+                            </small>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="searchType" class="form-label">
+                                    <i class="fas fa-filter me-1"></i> 搜索类型
+                                </label>
+                                <select class="form-select form-select-lg" id="searchType">
+                                    <option value="song" selected>歌曲</option>
+                                    <option value="artist">歌手</option>
+                                    <option value="album">专辑</option>
+                                    <option value="playlist">歌单</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="resultLimit" class="form-label">
+                                    <i class="fas fa-list-ol me-1"></i> 结果数量
+                                </label>
+                                <input type="number" class="form-control form-control-lg" id="resultLimit"
+                                       min="1" max="100" value="20">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-headphones me-1"></i> 选择平台
+                            </label>
+                            <div class="platform-selector">
+                                <div class="platform-option">
+                                    <input type="checkbox" id="platform_qq" value="qq" checked>
+                                    <label for="platform_qq" class="platform-label">
+                                        <div class="platform-icon">🎵</div>
+                                        <div class="platform-name">QQ 音乐</div>
+                                    </label>
+                                </div>
+                                <div class="platform-option">
+                                    <input type="checkbox" id="platform_netease" value="netease" checked>
+                                    <label for="platform_netease" class="platform-label">
+                                        <div class="platform-icon">🎧</div>
+                                        <div class="platform-name">网易云音乐</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-search me-2"></i> 开始搜索
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 搜索结果 -->
+    <div class="row" id="resultsSection" style="display: none;">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        搜索结果
+                    </h5>
+                    <span class="badge bg-primary" id="resultCount">0 条结果</span>
+                </div>
+                <div class="card-body">
+                    <div id="musicResults">
+                        <!-- 结果将动态加载到这里 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 搜索进度模态框 -->
+<div class="modal fade" id="searchProgressModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog fa-spin me-2"></i>
+                    正在搜索
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body text-center py-5">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <h5 id="searchStatus">正在搜索音乐...</h5>
+                <p class="text-muted" id="searchDetail">请稍候</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>关闭
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/music.js') }}"></script>
+{% endblock %}

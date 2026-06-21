@@ -1,0 +1,37 @@
+{
+  "workflow": [
+    {
+      "step": 1,
+      "name": "数据采集",
+      "agent": "scraper",
+      "action": "fetch_products",
+      "parallel": false,
+      "timeout": 60,
+      "description": "从选定的平台抓取商品数据",
+      "output_to": ["review_analyzer", "price_monitor"]
+    },
+    {
+      "step": 2,
+      "name": "并行分析",
+      "agents": ["review_analyzer", "price_monitor"],
+      "parallel": true,
+      "timeout": 90,
+      "description": "同时进行评价分析和价格监控",
+      "output_to": ["report_generator"]
+    },
+    {
+      "step": 3,
+      "name": "报告生成",
+      "agent": "report_generator",
+      "action": "generate_report",
+      "parallel": false,
+      "timeout": 60,
+      "description": "生成最终的对比报告和图表"
+    }
+  ],
+  "error_handling": {
+    "retry_on_failure": true,
+    "max_retries": 2,
+    "fallback_strategy": "continue_with_available_data"
+  }
+}

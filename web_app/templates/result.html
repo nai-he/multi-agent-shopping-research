@@ -1,0 +1,597 @@
+{% extends "layout.html" %}
+
+{% block title %}查询结果 - Multi-Agent 购物调研系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <!-- 返回按钮 -->
+            <div class="mb-3">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i> 返回仪表盘
+                </a>
+            </div>
+
+            <!-- 结果卡片 -->
+            <div id="resultContent">
+                <div class="text-center py-5">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="text-muted mt-3">加载中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    const queryId = {{ query_id }};
+
+    // 加载结果
+    function loadResult() {
+        $.ajax({
+            url: `/api/query/${queryId}`,
+            method: 'GET',
+            success: function(data) {
+                renderResult(data);
+            },
+            error: function() {
+                $('#resultContent').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        加载失败
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // 渲染结果
+    function renderResult(data) {
+        if (data.status === 'pending' || data.status === 'processing') {
+            $('#resultContent').html(`
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="loading-spinner mx-auto mb-4"></div>
+                        <h5>正在处理中...</h5>
+                        <p class="text-muted">请稍候，分析预计需要 10-30 秒</p>
+                    </div>
+                </div>
+            `);
+            // 2秒后重新加载
+            setTimeout(loadResult, 2000);
+            return;
+        }
+
+        if (data.status === 'failed') {
+            const failedData = data.data || {};
+            const failedCrawlMeta = failedData.crawl_meta || {};
+            const failedDiagnosticsHtml = renderPlatformDiagnostics(failedCrawlMeta);
+            const failedQueryPlan = failedCrawlMeta.query_plan || {};
+            const failedSafePlatforms = (data.platforms || []).map(function(platform) {
+                return escapeHtml(getPlatformName(platform));
+            }).join(', ') || '-';
+            const failedPlanHtml = failedQueryPlan.live_queries && failedQueryPlan.live_queries.length
+                ? `<div class="small text-muted mt-3">尝试顺序：${failedQueryPlan.live_queries.map(escapeHtml).join(' → ')}</div>`
+                : '';
+
+            $('#resultContent').html(`
+                <div class="card mb-4 border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-circle-exclamation me-2"></i>
+                            本次分析失败
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>查询词：</strong>${escapeHtml(data.query || '-')}</p>
+                        <p class="mb-2"><strong>目标平台：</strong>${failedSafePlatforms}</p>
+                        <p class="mb-2"><strong>地区范围：</strong>${escapeHtml(data.location || failedCrawlMeta.location || '不限')}</p>
+                        <p class="mb-2"><strong>目标数量：</strong>${escapeHtml(String(data.sample_count || failedCrawlMeta.target_count || 0))}</p>
+                        <div class="alert alert-danger mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            ${escapeHtml(normalizeDiagnosticMessage(data.error_message || failedCrawlMeta.failure_reason || '未知错误'))}
+                        </div>
+                        ${failedCrawlMeta.status_message ? `<div class="small text-warning mt-3"><strong>抓取说明：</strong>${escapeHtml(normalizeDiagnosticMessage(failedCrawlMeta.status_message))}</div>` : ''}
+                        ${failedPlanHtml}
+                    </div>
+                </div>
+                ${failedDiagnosticsHtml}
+            `);
+            return;
+        }
+
+        const products = (data.data && data.data.products) ? data.data.products : [];
+        const crawlMeta = (data.data && data.data.crawl_meta) ? data.data.crawl_meta : {};
+        const priceMonitoring = (data.data && data.data.price_monitoring) ? data.data.price_monitoring : {};
+        const charts = (data.data && data.data.charts) ? data.data.charts : {};
+        const priceComparison = priceMonitoring.price_comparison || {};
+        const valueRanking = priceMonitoring.value_ranking || [];
+
+        const priceOverview = renderPriceOverview(priceComparison, products);
+        const valueRankingHtml = renderValueRanking(valueRanking);
+        const productTableHtml = renderProductTable(products);
+        const platformDiagnosticsHtml = renderPlatformDiagnostics(crawlMeta);
+        const chartsHtml = renderCharts(charts);
+        const safeQuery = escapeHtml(data.query);
+        const safePlatforms = (data.platforms || []).map(function(platform) {
+            return escapeHtml(getPlatformName(platform));
+        }).join(', ');
+
+        // 渲染完成的结果
+        let html = `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        查询结果：${safeQuery}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-primary">${data.products_count}</h3>
+                                <p class="text-muted">已爬商品</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-success">${data.estimated_total || crawlMeta.estimated_total || 0}</h3>
+                                <p class="text-muted">估计总数</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-info">${data.crawl_progress || crawlMeta.progress_text || '-'}</h3>
+                                <p class="text-muted">爬取进度</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <a href="/api/query/${queryId}/report" class="btn btn-success">
+                                        <i class="fas fa-download me-1"></i> 下载报告
+                                    </a>
+                                    <a href="/api/query/${queryId}/excel" class="btn btn-primary">
+                                        <i class="fas fa-file-excel me-1"></i> Excel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            ${priceOverview}
+
+            ${valueRankingHtml}
+
+            ${productTableHtml}
+
+            ${platformDiagnosticsHtml}
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        分析摘要
+                    </h5>
+                </div>
+                <div class="card-body">
+                    ${chartsHtml}
+                    <p>查询关键词：<strong>${safeQuery}</strong></p>
+                    <p>目标平台：${safePlatforms}</p>
+                    <p>地区范围：${escapeHtml(data.location || crawlMeta.location || '不限')}</p>
+                    <p>目标数量：${data.sample_count || crawlMeta.target_count || '-'}</p>
+                    ${crawlMeta.status_message ? `<p class="text-warning mb-2">抓取说明：${escapeHtml(normalizeDiagnosticMessage(crawlMeta.status_message))}</p>` : ''}
+                    <p>价格排序：${getSortOrderName(data.sort_order || crawlMeta.sort_order)}</p>
+                    <p>分析时间：${new Date(data.completed_at).toLocaleString('zh-CN')}</p>
+                    ${data.error_message ? `<p class="text-danger mb-0">错误信息：${escapeHtml(normalizeDiagnosticMessage(data.error_message))}</p>` : ''}
+                </div>
+            </div>
+        `;
+
+        $('#resultContent').html(html);
+    }
+
+    function renderCharts(charts) {
+        const chartOrder = [
+            ['price_comparison', '价格分布'],
+            ['sentiment_pie', '情感分析'],
+            ['value_ranking', '性价比排行'],
+            ['seller_radar', '卖家画像']
+        ];
+        const items = chartOrder
+            .filter(([key]) => charts[key])
+            .map(([key, label]) => `
+                <div class="text-center mb-3">
+                    <img src="/api/charts/${encodeURIComponent(charts[key])}" class="img-fluid rounded shadow-sm" style="max-height:400px" alt="${escapeHtml(label)}">
+                </div>
+            `)
+            .join('');
+
+        if (items) {
+            return items;
+        }
+
+        return `
+            <div class="alert alert-secondary">
+                <i class="fas fa-chart-line me-2"></i>
+                当前这次查询没有生成可展示的图表。
+            </div>
+        `;
+    }
+
+    function renderPriceOverview(priceComparison, products) {
+        if (!products.length) {
+            return `
+                <div class="alert alert-warning">
+                    <i class="fas fa-triangle-exclamation me-2"></i>
+                    未召回到商品，请换一个更具体的关键词或选择更多平台。
+                </div>
+            `;
+        }
+
+        return `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-yen-sign me-2"></i>
+                        价格与市场覆盖
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="metric-tile">
+                                <div class="metric-label">最低价</div>
+                                <div class="metric-value">¥${formatMoney(priceComparison.min_price)}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-tile">
+                                <div class="metric-label">最高价</div>
+                                <div class="metric-value">¥${formatMoney(priceComparison.max_price)}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-tile">
+                                <div class="metric-label">平均价</div>
+                                <div class="metric-value">¥${formatMoney(priceComparison.avg_price)}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="metric-tile">
+                                <div class="metric-label">价格跨度</div>
+                                <div class="metric-value">¥${formatMoney(priceComparison.price_range)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderValueRanking(valueRanking) {
+        if (!valueRanking.length) {
+            return '';
+        }
+
+        const rows = valueRanking.slice(0, 5).map(function(item, index) {
+            return `
+                <tr>
+                    <td class="fw-bold">${index + 1}</td>
+                    <td>
+                        <div class="fw-semibold">${escapeHtml(item.title)}</div>
+                        <div class="text-muted small">${getPlatformName(item.platform)}</div>
+                    </td>
+                    <td>¥${formatMoney(item.price)}</td>
+                    <td>${item.sales || 0}</td>
+                    <td>${((item.positive_rate || 0) * 100).toFixed(1)}%</td>
+                    <td><span class="badge bg-primary">${item.value_score}</span></td>
+                </tr>
+            `;
+        }).join('');
+
+        return `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-ranking-star me-2"></i>
+                        性价比 Top 5
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>商品</th>
+                                    <th>价格</th>
+                                    <th>销量</th>
+                                    <th>好评率</th>
+                                    <th>得分</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderProductTable(products) {
+        if (!products.length) {
+            return '';
+        }
+
+        const rows = products.map(function(product) {
+            const seller = product.seller || {};
+            return `
+                <tr>
+                    <td><span class="badge bg-light text-dark">${getPlatformName(product.platform)}</span></td>
+                    <td>
+                        <div class="fw-semibold product-title-cell">${escapeHtml(product.title)}</div>
+                        <div class="text-muted small">${escapeHtml(seller.name || '未知卖家')} · ${escapeHtml(seller.reputation_level || '无信誉信息')}</div>
+                    </td>
+                    <td class="fw-bold text-primary">¥${formatMoney(product.price)}</td>
+                    <td>${product.sales || 0}</td>
+                    <td>${((product.positive_rate || 0) * 100).toFixed(1)}%</td>
+                    <td>${seller.rating ? seller.rating.toFixed(1) : '-'}</td>
+                </tr>
+            `;
+        }).join('');
+
+        return `
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes-stacked me-2"></i>
+                        商品样本明细（共 ${products.length} 条）
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive product-table-wrap" style="max-height: 70vh; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead style="position: sticky; top: 0; background: white; z-index: 10;">
+                                <tr>
+                                    <th>平台</th>
+                                    <th>商品</th>
+                                    <th>价格</th>
+                                    <th>销量</th>
+                                    <th>好评率</th>
+                                    <th>卖家评分</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderPlatformDiagnostics(crawlMeta) {
+        const platforms = crawlMeta && crawlMeta.platforms ? crawlMeta.platforms : {};
+        const platformErrors = Array.isArray(crawlMeta && crawlMeta.platform_errors) ? crawlMeta.platform_errors : [];
+        const platformNames = Object.keys(platforms);
+        if (!platformNames.length) {
+            return '';
+        }
+
+        const queryPlan = crawlMeta.query_plan || {};
+        const planLines = [];
+        if (queryPlan.core_query) {
+            planLines.push(`<div><strong>主搜索词：</strong>${escapeHtml(queryPlan.core_query)}</div>`);
+        }
+        if (queryPlan.live_queries && queryPlan.live_queries.length) {
+            planLines.push(`<div><strong>真实抓取顺序：</strong>${queryPlan.live_queries.map(escapeHtml).join(' → ')}</div>`);
+        }
+
+        const cards = platformNames.map(function(platform) {
+            const meta = platforms[platform] || {};
+            const attempts = Array.isArray(meta.query_attempts) ? meta.query_attempts : [];
+            const blocked = Array.isArray(meta.blocked_messages) ? [...meta.blocked_messages] : [];
+            const platformError = meta.error || ((platformErrors.find(function(item) {
+                return item.platform === platform;
+            }) || {}).error) || '';
+            const derivedRequiresLogin = Boolean(meta.requires_login) || /登录|login|验证/i.test(platformError);
+            const derivedRiskDetected = Boolean(meta.risk_detected) || /风控|RGV587|FAIL_SYS_USER_VALIDATE|挤爆|验证/i.test(platformError);
+            const derivedHasResults = Number(meta.crawled_count || 0) > 0;
+            const statusParts = [];
+            if (derivedHasResults) statusParts.push('<span class="badge bg-success">已抓取到结果</span>');
+            if (derivedRequiresLogin && !derivedHasResults) statusParts.push('<span class="badge bg-warning text-dark">需要登录</span>');
+            if (derivedRiskDetected) {
+                statusParts.push(
+                    derivedHasResults
+                        ? '<span class="badge bg-warning text-dark">过程中触发风控</span>'
+                        : '<span class="badge bg-danger">风控/验证</span>'
+                );
+            }
+            if (!statusParts.length && platformError) statusParts.push('<span class="badge bg-danger">抓取失败</span>');
+            if (!statusParts.length) statusParts.push('<span class="badge bg-secondary">未命中结果</span>');
+
+            const primaryStatusMessage = uniqueMessages([
+                normalizeDiagnosticMessage(meta.status_message, platform),
+                normalizeDiagnosticMessage(platformError, platform),
+                normalizeDiagnosticMessage(blocked[0], platform)
+            ])[0] || '';
+
+            const platformMessages = uniqueMessages([
+                ...blocked.map(function(message) { return normalizeDiagnosticMessage(message, platform); }),
+                normalizeDiagnosticMessage(platformError, platform),
+                ...attempts.map(function(attempt) {
+                    return normalizeDiagnosticMessage(attempt.status_message, platform);
+                })
+            ]).filter(function(message) {
+                return message !== primaryStatusMessage;
+            });
+
+            const showAttemptList = attempts.length > 1 || attempts.some(function(attempt) {
+                const queryText = String(attempt.query || '').trim();
+                const coreQuery = String(queryPlan.core_query || '').trim();
+                const statusText = String(attempt.status_message || '').trim();
+                return attempt.returned_count > 0 || (queryText && queryText !== coreQuery) || (statusText && statusText !== primaryStatusMessage);
+            });
+
+            const attemptList = showAttemptList
+                ? `
+                    <div class="small text-muted mt-2">
+                        <strong>尝试记录：</strong><br>
+                        ${attempts.map(function(attempt) {
+                            const parts = [
+                                `${escapeHtml(attempt.query)} (${attempt.returned_count}/${attempt.requested_limit})`
+                            ];
+                            const attemptStatus = normalizeDiagnosticMessage(attempt.status_message, platform);
+                            if (attemptStatus && attemptStatus !== primaryStatusMessage) {
+                                parts.push(escapeHtml(attemptStatus));
+                            }
+                            return parts.join(' | ');
+                        }).join('<br>')}
+                    </div>
+                `
+                : '';
+
+            const platformMessagesHtml = platformMessages.length
+                ? `
+                    <div class="small ${derivedHasResults ? 'text-warning' : 'text-danger'} mt-2">
+                        <strong>平台返回：</strong><br>
+                        ${platformMessages.map(escapeHtml).join('<br>')}
+                    </div>
+                `
+                : '';
+
+            const fallbackNextAction = derivedRiskDetected
+                ? `${getPlatformName(platform)} 当前会话已触发风控，建议稍后重试，或先完成登录后再复用会话继续抓取。`
+                : (derivedRequiresLogin
+                    ? `${getPlatformName(platform)} 当前页面提示需要登录，建议先完成登录并复用会话后再重试。`
+                    : (platformError
+                        ? `${getPlatformName(platform)} 本次抓取失败，建议稍后重试或切换平台继续完成样本采集。`
+                        : ''));
+            const nextAction = (meta.suggested_next_action || fallbackNextAction)
+                ? `<div class="small mt-2"><strong>建议：</strong>${escapeHtml(normalizeDiagnosticMessage(meta.suggested_next_action || fallbackNextAction, platform))}</div>`
+                : '';
+            const progressText = meta.progress_text || `0/${meta.target_count || crawlMeta.target_count || 0}`;
+            const estimatedTotal = String(meta.estimated_total || 0);
+
+            return `
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">${escapeHtml(getPlatformName(platform))}</h6>
+                                <div class="d-flex gap-1 flex-wrap justify-content-end">${statusParts.join('')}</div>
+                            </div>
+                            <div class="small text-muted">进度：${escapeHtml(progressText || '-')}</div>
+                            <div class="small text-muted">估计总量：${escapeHtml(estimatedTotal)}</div>
+                            ${primaryStatusMessage ? `<div class="small mt-2"><strong>说明：</strong>${escapeHtml(primaryStatusMessage)}</div>` : ''}
+                            ${attemptList}
+                            ${platformMessagesHtml}
+                            ${nextAction}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-stethoscope me-2"></i>
+                        平台抓取诊断
+                    </h5>
+                </div>
+                <div class="card-body">
+                    ${planLines.length ? `<div class="mb-3 small">${planLines.join('')}</div>` : ''}
+                    <div class="row g-3">
+                        ${cards}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function formatMoney(value) {
+        const number = Number(value || 0);
+        return number.toLocaleString('zh-CN', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        });
+    }
+
+    function uniqueMessages(values) {
+        const seen = new Set();
+        return (values || []).map(function(value) {
+            return String(value || '').trim();
+        }).filter(function(value) {
+            if (!value || seen.has(value)) {
+                return false;
+            }
+            seen.add(value);
+            return true;
+        });
+    }
+
+    function normalizeDiagnosticMessage(value, platform) {
+        const raw = String(value || '').trim();
+        if (!raw) {
+            return '';
+        }
+
+        const platformMap = {
+            xianyu: '闲鱼',
+            taobao: '淘宝',
+            jd: '京东',
+            pdd: '拼多多'
+        };
+
+        let normalized = raw;
+        Object.keys(platformMap).forEach(function(key) {
+            const label = platformMap[key];
+            normalized = normalized.replace(new RegExp(`(^|\\s)${key}\\s*:`, 'gi'), `$1${label}：`);
+            normalized = normalized.replace(new RegExp(`(^|\\s)${key}\\s*-`, 'gi'), `$1${label} -`);
+        });
+
+        return normalized;
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getPlatformName(platform) {
+        const names = {
+            'xianyu': '闲鱼',
+            'taobao': '淘宝',
+            'jd': '京东',
+            'pdd': '拼多多'
+        };
+        return names[platform] || platform;
+    }
+
+    function getSortOrderName(sortOrder) {
+        const names = {
+            'none': '不排序',
+            'price_asc': '价格升序',
+            'price_desc': '价格降序'
+        };
+        return names[sortOrder] || sortOrder || '不排序';
+    }
+
+    // 初始加载
+    loadResult();
+});
+</script>
+{% endblock %}

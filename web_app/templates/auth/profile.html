@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+
+{% block title %}个人资料 - Multi-Agent 购物调研系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>个人资料</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="profile-avatar me-3">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1">{{ current_user.username }}</h4>
+                            <p class="text-muted mb-0">{{ current_user.email }}</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-meta">
+                        <div class="profile-meta-item">
+                            <span>注册时间</span>
+                            <strong>{{ current_user.created_at.strftime('%Y-%m-%d %H:%M') if current_user.created_at else '-' }}</strong>
+                        </div>
+                        <div class="profile-meta-item">
+                            <span>最后登录</span>
+                            <strong>{{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else '暂无记录' }}</strong>
+                        </div>
+                        <div class="profile-meta-item">
+                            <span>总查询</span>
+                            <strong>{{ total_queries }}</strong>
+                        </div>
+                        <div class="profile-meta-item">
+                            <span>完成 / 失败 / 处理中</span>
+                            <strong>{{ completed_queries }} / {{ failed_queries }} / {{ processing_queries }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>最近查询</h5>
+                    <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-light">查看全部</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_queries %}
+                        <div class="timeline-list">
+                            {% for item in recent_queries %}
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-content">
+                                        <div class="d-flex justify-content-between gap-3 flex-wrap">
+                                            <div>
+                                                <h6 class="mb-1">{{ item.query }}</h6>
+                                                <p class="text-muted small mb-0">
+                                                    {{ item.location or '不限' }} · {{ item.sample_count or '-' }} 条 · {{ item.sort_order or 'none' }}
+                                                </p>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge badge-{{ item.status }}">{{ item.status }}</span>
+                                                <div class="small text-muted mt-1">
+                                                    {{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else '-' }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <p class="mb-0">暂无查询记录</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

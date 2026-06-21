@@ -1,0 +1,39 @@
+{
+    "api": {
+        "base_url": "https://api.deepseek.com/anthropic",
+        "api_key": "your_api_key_here",
+        "model": "claude-opus-4-7",
+        "timeout": 3000,
+        "max_retries": 3
+    },
+    "agents": {
+        "scraper": {
+            "name": "ScraperAgent",
+            "path": "agents/scraper-agent",
+            "description": "数据采集器 - 从多个电商平台抓取商品信息",
+            "port": 5001
+        },
+        "review_analyzer": {
+            "name": "ReviewAnalyzerAgent",
+            "path": "agents/review-analyzer-agent",
+            "description": "评价分析器 - 分析商品评价、情感分析、识别差评",
+            "port": 5002
+        },
+        "price_monitor": {
+            "name": "PriceMonitorAgent",
+            "path": "agents/price-monitor-agent",
+            "description": "价格监控器 - 价格对比、性价比计算、历史追踪",
+            "port": 5003
+        },
+        "report_generator": {
+            "name": "ReportGeneratorAgent",
+            "path": "agents/report-generator-agent",
+            "description": "报告生成器 - 生成Markdown报告和可视化图表",
+            "port": 5004
+        }
+    },
+    "communication": {
+        "protocol": "direct",
+        "timeout": 30
+    }
+}

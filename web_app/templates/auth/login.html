@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block title %}登录 - Multi-Agent 购物调研系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card fade-in-up">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        登录账号
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('auth.login') }}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user me-1"></i> 用户名
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username" required autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-1"></i> 密码
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                            <label class="form-check-label" for="remember">
+                                记住我
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i> 登录
+                        </button>
+                        <a href="{{ url_for('admin.login') }}" class="btn btn-outline-secondary w-100 mb-3">
+                            <i class="fas fa-shield-halved me-2"></i> 管理员登录
+                        </a>
+                        <div class="text-center">
+                            <p class="text-muted mb-0">
+                                还没有账号？
+                                <a href="{{ url_for('auth.register') }}" class="text-decoration-none fw-bold">立即注册</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h1 class="hero-title">
+                    <i class="fas fa-robot me-3"></i>
+                    智能购物调研系统
+                </h1>
+                <p class="hero-subtitle">
+                    基于 Multi-Agent 架构，一键对比多平台商品，智能分析评价，生成专业报告
+                </p>
+                <div class="hero-buttons">
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg me-3">
+                        <i class="fas fa-rocket me-2"></i> 立即开始
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-info-circle me-2"></i> 了解更多
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 特性展示 -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3 fade-in-up">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="feature-title">多平台采集</h3>
+                    <p class="feature-desc">
+                        自动抓取闲鱼、淘宝、京东、拼多多等平台商品数据，一键对比
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 fade-in-up" style="animation-delay: 0.1s;">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <h3 class="feature-title">智能评价分析</h3>
+                    <p class="feature-desc">
+                        情感分析、差评识别、刷评检测，自动评估商品风险等级
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 fade-in-up" style="animation-delay: 0.2s;">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">价格监控</h3>
+                    <p class="feature-desc">
+                        实时价格对比、性价比计算、历史价格追踪，找到最优购买时机
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3 fade-in-up" style="animation-delay: 0.3s;">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="feature-title">可视化报告</h3>
+                    <p class="feature-desc">
+                        自动生成包含 8+ 种专业图表的 Markdown 报告，支持导出分享
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 工作流程 -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center text-white mb-5 fw-bold">
+            <i class="fas fa-cogs me-2"></i> 工作流程
+        </h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-keyboard fa-3x text-primary"></i>
+                        </div>
+                        <h5 class="fw-bold">1. 输入关键词</h5>
+                        <p class="text-muted">输入要查询的商品关键词，选择目标平台</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-robot fa-3x text-success"></i>
+                        </div>
+                        <h5 class="fw-bold">2. AI 分析</h5>
+                        <p class="text-muted">4个 Agent 协同工作，自动采集和分析数据</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-chart-bar fa-3x text-info"></i>
+                        </div>
+                        <h5 class="fw-bold">3. 生成报告</h5>
+                        <p class="text-muted">生成包含多种图表的专业调研报告</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="fas fa-shopping-bag fa-3x text-warning"></i>
+                        </div>
+                        <h5 class="fw-bold">4. 明智购买</h5>
+                        <p class="text-muted">基于数据分析，做出最优购买决策</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 my-5">
+    <div class="container">
+        <div class="card" style="background: rgba(255,255,255,0.95);">
+            <div class="card-body text-center py-5">
+                <h2 class="fw-bold mb-4">
+                    <i class="fas fa-rocket me-2"></i>
+                    开始使用智能购物调研
+                </h2>
+                <p class="lead text-muted mb-4">
+                    注册账号，立即体验 AI 驱动的购物调研服务
+                </p>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-user-plus me-2"></i> 免费注册
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

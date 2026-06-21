@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+
+{% block title %}注册 - Multi-Agent 购物调研系统{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card fade-in-up">
+                <div class="card-header text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        创建新账号
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('auth.register') }}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="fas fa-user me-1"></i> 用户名
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username" required autofocus>
+                            <div class="form-text">3-20个字符，可使用字母、数字、下划线</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i> 邮箱
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="fas fa-lock me-1"></i> 密码
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="form-text">至少6个字符</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">
+                                <i class="fas fa-lock me-1"></i> 确认密码
+                            </label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mb-3">
+                            <i class="fas fa-user-plus me-2"></i> 注册
+                        </button>
+                        <div class="text-center">
+                            <p class="text-muted mb-0">
+                                已有账号？
+                                <a href="{{ url_for('auth.login') }}" class="text-decoration-none fw-bold">立即登录</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
