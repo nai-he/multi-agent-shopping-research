@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - SECRET_KEY=dev-secret-change-me
+    volumes:
+      - ./web_app/music:/app/web_app/music
+      - ./web_app/sqlite:/app/web_app/sqlite
+      - ./web_app/reports:/app/web_app/reports
+    restart: unless-stopped
