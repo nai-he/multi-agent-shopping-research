@@ -207,6 +207,21 @@ def user_detail(user_id: int):
     )
 
 
+@admin_bp.route("/users/<int:user_id>/delete", methods=["POST"])
+@admin_required
+def delete_user(user_id: int):
+    user = db.session.get(User, user_id)
+    if not user:
+        flash("用户不存在", "danger")
+        return redirect(url_for("admin.users"))
+
+    db.session.query(QueryHistory).filter_by(user_id=user.id).delete()
+    db.session.delete(user)
+    db.session.commit()
+    flash(f"用户 {user.username} 已删除", "success")
+    return redirect(url_for("admin.users"))
+
+
 @admin_bp.route("/operations")
 @admin_required
 def operations():
